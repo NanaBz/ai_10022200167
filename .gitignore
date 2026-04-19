@@ -1,0 +1,12 @@
+# Nanakwaku Boateng Boakye-Akyeampong | Index: 10022200167
+__pycache__/
+.venv/
+venv/
+*.pyc
+.pytest_cache/
+.streamlit/
+data/*.pdf
+data/*.csv
+index_store/
+logs/*.log
+.DS_Store
