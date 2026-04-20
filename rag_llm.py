@@ -17,6 +17,23 @@ from rag_prompt import BuiltPrompt
 log = logging.getLogger(__name__)
 
 
+def _usage_to_dict(usage: Any) -> dict[str, Any] | None:
+    """OpenAI returns CompletionUsage objects; JSON logs need plain dicts."""
+    if usage is None:
+        return None
+    if isinstance(usage, dict):
+        return usage
+    if hasattr(usage, "model_dump"):
+        return usage.model_dump()
+    if hasattr(usage, "dict"):  # older pydantic
+        return usage.dict()
+    return {
+        "prompt_tokens": getattr(usage, "prompt_tokens", None),
+        "completion_tokens": getattr(usage, "completion_tokens", None),
+        "total_tokens": getattr(usage, "total_tokens", None),
+    }
+
+
 def get_client() -> OpenAI | None:
     key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not key:
@@ -43,7 +60,7 @@ def generate_rag_answer(bp: BuiltPrompt) -> tuple[str, dict[str, Any]]:
             temperature=0.2,
         )
         text = (resp.choices[0].message.content or "").strip()
-        meta["usage"] = getattr(resp, "usage", None)
+        meta["usage"] = _usage_to_dict(getattr(resp, "usage", None))
         return text, meta
     except Exception as e:
         log.exception("OpenAI call failed")
@@ -70,6 +87,7 @@ def generate_baseline_no_context(user_query: str) -> tuple[str, dict[str, Any]]:
             temperature=0.2,
         )
         text = (resp.choices[0].message.content or "").strip()
+        meta["usage"] = _usage_to_dict(getattr(resp, "usage", None))
         return text, meta
     except Exception as e:
         return f"LLM error: {e}", {**meta, "error": str(e)}

@@ -1,0 +1,13 @@
+# Nanakwaku Boateng Boakye-Akyeampong | 10022200167
+# Streamlit theme — Nkabom Lens
+
+[theme]
+base = "dark"
+primaryColor = "#c9a227"
+backgroundColor = "#0c0f14"
+secondaryBackgroundColor = "#151a22"
+textColor = "#e8eaed"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false

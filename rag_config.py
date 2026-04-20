@@ -40,6 +40,11 @@ FINAL_CONTEXT_CHUNKS = 6
 # --- Context window (rough char budget for retrieved text in prompt) ---
 MAX_CONTEXT_CHARS = 6000
 
+# --- Conversational RAG (session memory in prompt only; optional) ---
+MEMORY_MAX_TURNS = 6
+MEMORY_MAX_CHARS = 2500
+MEMORY_ANSWER_PREVIEW_CHARS = 450
+
 # --- LLM ---
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 

@@ -7,7 +7,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from rag_config import MAX_CONTEXT_CHARS
+from rag_config import (
+    MAX_CONTEXT_CHARS,
+    MEMORY_ANSWER_PREVIEW_CHARS,
+    MEMORY_MAX_CHARS,
+    MEMORY_MAX_TURNS,
+)
 from rag_retrieve import RetrievedChunk
 
 
@@ -25,6 +30,31 @@ PROMPT_VARIANTS = {
     "strict_anti_hallucination": SYSTEM_PROMPT_STRICT,
     "concise_not_found": SYSTEM_PROMPT_CONCISE,
 }
+
+
+def format_conversation_memory(
+    prior_turns: list[tuple[str, str]],
+    max_turns: int = MEMORY_MAX_TURNS,
+    max_total_chars: int = MEMORY_MAX_CHARS,
+    answer_preview: int = MEMORY_ANSWER_PREVIEW_CHARS,
+) -> str:
+    """
+    Turn (query, answer) pairs from earlier in the browser session.
+    Used for follow-up resolution only; does not replace retrieved CONTEXT.
+    """
+    if not prior_turns:
+        return ""
+    tail = prior_turns[-max_turns:]
+    blocks: list[str] = []
+    total = 0
+    for i, (q, a) in enumerate(tail, 1):
+        a_short = (a[:answer_preview] + "…") if len(a) > answer_preview else a
+        block = f"[Turn {i}] User: {q.strip()}\nAssistant: {a_short.strip()}"
+        if total + len(block) + 2 > max_total_chars and blocks:
+            break
+        blocks.append(block)
+        total += len(block) + 2
+    return "\n\n".join(blocks)
 
 
 def _tagged_block(r: RetrievedChunk) -> str:
@@ -45,6 +75,7 @@ def build_messages(
     retrieved: list[RetrievedChunk],
     max_chars: int = MAX_CONTEXT_CHARS,
     prompt_variant: str = "strict_anti_hallucination",
+    conversation_memory: str | None = None,
 ) -> BuiltPrompt:
     """
     Context window management: chunks are already ranked; we add in order until
@@ -64,10 +95,20 @@ def build_messages(
 
     context_str = "\n\n".join(blocks) if blocks else "(no context retrieved)"
     system = PROMPT_VARIANTS.get(prompt_variant, PROMPT_VARIANTS["strict_anti_hallucination"])
+    mem = (conversation_memory or "").strip()
+    memory_block = ""
+    if mem:
+        memory_block = (
+            "PRIOR CONVERSATION (session memory — use only to interpret follow-up questions, "
+            "ellipsis, and pronouns. Do not treat prior assistant replies as ground truth; "
+            "confirm numbers and names against CONTEXT below.)\n"
+            f"{mem}\n\n"
+        )
     user = (
-        f"USER QUESTION:\n{user_query.strip()}\n\n"
-        f"CONTEXT:\n{context_str}\n\n"
-        "Answer the question using the context. If context lacks the answer, say you cannot find it."
+        f"{memory_block}"
+        f"CURRENT USER QUESTION:\n{user_query.strip()}\n\n"
+        f"CONTEXT (retrieved documents):\n{context_str}\n\n"
+        "Answer CURRENT USER QUESTION using CONTEXT. If CONTEXT lacks the answer, say so."
     )
     return BuiltPrompt(system=system, user=user, context_blocks=blocks, truncated=truncated)
 
