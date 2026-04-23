@@ -9,7 +9,7 @@
 | **Course** | CS4241 — Introduction to Artificial Intelligence |
 | **Entry point** | `ca_10022200167.py` |
 
-**Live app:** *Add your deployed URL here after publishing.*
+**Live app:** [https://ai10022200167-zgvfsnfh5n6gtjccvgynlp.streamlit.app](https://ai10022200167-zgvfsnfh5n6gtjccvgynlp.streamlit.app/)
 
 ---
 
