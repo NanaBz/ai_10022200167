@@ -13,6 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DATA_DIR = PROJECT_ROOT / "data"
 INDEX_DIR = PROJECT_ROOT / "index_store"
 LOG_DIR = PROJECT_ROOT / "logs"
+REPORTS_DIR = PROJECT_ROOT / "reports"
 
 CSV_URL = (
     "https://raw.githubusercontent.com/GodwinDansoAcity/acitydataset/"
@@ -26,9 +27,24 @@ PDF_URL = (
 LOCAL_CSV = DATA_DIR / "Ghana_Election_Result.csv"
 LOCAL_PDF = DATA_DIR / "budget_2025.pdf"
 
-# --- Chunking (Part A defaults; justify overlap in README) ---
-PDF_CHUNK_CHARS = 1200
-PDF_CHUNK_OVERLAP = 200
+
+def _int_env(name: str, default: int) -> int:
+    """Read an optional int from the environment; invalid or missing → default."""
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+# --- Chunking (Part A defaults) ---
+# Override without editing this file: set env vars before starting Streamlit, e.g.
+#   $env:PDF_CHUNK_CHARS=800; $env:PDF_CHUNK_OVERLAP=100; streamlit run ca_10022200167.py
+# Or use run_streamlit_config_a.ps1 / run_streamlit_config_b.ps1 in the project folder.
+PDF_CHUNK_CHARS = _int_env("PDF_CHUNK_CHARS", 1200)
+PDF_CHUNK_OVERLAP = _int_env("PDF_CHUNK_OVERLAP", 200)
 
 # --- Retrieval ---
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -51,3 +67,4 @@ OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(INDEX_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
+os.makedirs(REPORTS_DIR, exist_ok=True)

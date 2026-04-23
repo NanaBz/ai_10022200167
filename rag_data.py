@@ -120,9 +120,15 @@ def _split_pdf_text(text: str, chunk_size: int, overlap: int) -> list[tuple[str,
     return out
 
 
-def pdf_to_chunks(pdf_path: Path) -> list[ChunkRecord]:
+def pdf_to_chunks(
+    pdf_path: Path,
+    chunk_chars: int | None = None,
+    chunk_overlap: int | None = None,
+) -> list[ChunkRecord]:
+    cc = chunk_chars if chunk_chars is not None else PDF_CHUNK_CHARS
+    co = chunk_overlap if chunk_overlap is not None else PDF_CHUNK_OVERLAP
     raw = _extract_pdf_text(pdf_path)
-    windows = _split_pdf_text(raw, PDF_CHUNK_CHARS, PDF_CHUNK_OVERLAP)
+    windows = _split_pdf_text(raw, cc, co)
     chunks: list[ChunkRecord] = []
     for i, (piece, off) in enumerate(windows):
         cid = f"pdf:{i}"
@@ -132,9 +138,16 @@ def pdf_to_chunks(pdf_path: Path) -> list[ChunkRecord]:
     return chunks
 
 
-def build_all_chunks() -> list[ChunkRecord]:
+def build_all_chunks(
+    pdf_chunk_chars: int | None = None,
+    pdf_chunk_overlap: int | None = None,
+) -> list[ChunkRecord]:
     csv_path, pdf_path = load_raw_sources()
-    return csv_to_chunks(csv_path) + pdf_to_chunks(pdf_path)
+    return csv_to_chunks(csv_path) + pdf_to_chunks(
+        pdf_path,
+        chunk_chars=pdf_chunk_chars,
+        chunk_overlap=pdf_chunk_overlap,
+    )
 
 
 def save_chunk_manifest(chunks: list[ChunkRecord], path: Path) -> None:
